@@ -1,0 +1,52 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Homing : MonoBehaviour
+{
+    [SerializeField] private Transform targetCube;
+    [SerializeField] private Transform smokeTrail;
+    //[SerializeField] public GameObject Canvas;
+    [SerializeField] private float force;
+    [SerializeField] private float rotationForce;
+    private Rigidbody rb;
+    public GameObject explosionEffect;
+    public AudioClip rocketExplode;
+    public AudioClip rocketLaunch;
+    public float explosionVolume;
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+        AudioSource.PlayClipAtPoint(rocketLaunch, transform.position, explosionVolume);
+        targetCube = GameObject.FindWithTag("Enemy").transform;
+        smokeTrail = GameObject.Find("Smoke Trail").transform;
+
+    }
+
+    void FixedUpdate()
+    {
+        if (targetCube != null)
+        {
+            Vector3 direction = targetCube.position - rb.position;
+            direction.Normalize();
+            Vector3 rotationAmount = Vector3.Cross(transform.forward, direction);
+            rb.angularVelocity = rotationAmount * rotationForce;
+            rb.velocity = transform.forward * force;
+        }
+    }
+
+        private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Enemy")
+        {
+            Instantiate(explosionEffect, transform.position, transform.rotation);
+            AudioSource.PlayClipAtPoint(rocketExplode, transform.position, explosionVolume);
+            
+            Destroy(collision.collider.gameObject);
+            Destroy(gameObject);
+            smokeTrail.GetComponent<DeleteAfter>().AboutToDie();
+            //Canvas.GetComponent<LockOn>().enemiesInGame.Remove(gameObject);
+            Destroy(this.gameObject);
+        }
+    }
+}
